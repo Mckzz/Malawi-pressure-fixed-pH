@@ -5,7 +5,7 @@ library(readr)
 setwd("~/student_documents/UBC/Research/Malawi/data/sac pressure, fixed pH")
 
 
-setwd("./sacs pH 6 then pressure")
+setwd("./sacs pH 8 then pressure")
 setwd("./area results, thresh calc")
 
 
@@ -14,7 +14,8 @@ setwd("./area results, thresh calc")
 list_of_results <- # list of file names
   list.files(pattern = "\\.csv$",
              full.names = F) #leave out folder path
-head(list_of_results, n = 10)
+print(list_of_results)
+#rm(list_of_results)
 
 # read in files, modify text in larva column, add psi column for x axis
 larvae.df <- read_delim(list_of_results,
@@ -25,10 +26,25 @@ larvae.df <- read_delim(list_of_results,
   group_by(larva, sac) %>%
   mutate(psi = (row_number() * 30) - 30) %>% # x axis starting from zero
   mutate(area_set_0psi = Area - Area[1]) %>% # still abs size, but starting from o psi
-  mutate(pct.area = ((Area - Area[1]) / Area[1]) * 100)
-
+  mutate(pct.area = ((Area - Area[1]) / Area[1]) * 100) %>%
+  ungroup() %>%
+  group_by(psi) %>%
+  mutate(mean_pct_area = mean(pct.area)) %>% # mean for all sacs at a psi
+  mutate(sd_pct_area = sd(pct.area))
 
 print(larvae.df)
+
+# % change
+ggplot(data = larvae.df, 
+       aes(x = psi,
+           group = interaction(larva, sac),
+           colour = larva), na.rm = F) +
+  geom_point(aes(y= pct.area), size = 2, alpha = 0.4) +
+  geom_line(aes(y= pct.area), alpha = 0.4) +
+  geom_point(aes(y= mean_pct_area), size = 3, colour = "black") +
+  geom_line(aes(y= mean_pct_area), colour = "black")
+
+
 
 # absolute sizez
 ggplot(data = larvae.df, 
@@ -49,19 +65,20 @@ ggplot(data = larvae.df,
   geom_point(aes(y= area_set_0psi)) +
   geom_line(aes(y= area_set_0psi))
 
-# % change
-ggplot(data = larvae.df, 
-       aes(x= psi,
-           group = interaction(larva, sac),
-           colour = larva), na.rm = F) +
-  geom_point(aes(y= pct.area), size = 2) 
-  #geom_point(aes(y= pct.area)) +
-  #geom_line(aes(y= pct.area))
+
+######################   making the file for a given pH   #########################
+
+write_csv(larvae.df,
+          "~/student_documents/UBC/Research/Malawi/data/sac pressure, fixed pH/larvae_pH8.csv")
+
+
+
+###################################################################################
 
 ###########   looking at/ comparing individual larvae   ##########
 
 larva_choose <- larvae.df %>%
-  filter(larva == "larva 11" | larva == "larva 3")
+  filter(larva == "larva 9" | larva == "larva 10")
 print(larva_choose)
 
 # absolute sizez
@@ -69,7 +86,7 @@ ggplot(data = larva_choose,
        aes(x= psi,
            group = interaction(larva, sac),
            colour = larva), na.rm = F) +
-  geom_point(aes(y= Area, size = 1.5)) +
+  geom_point(aes(y= Area), size = 1) +
   geom_line(aes(y= Area))
 
 
@@ -82,7 +99,7 @@ ggplot(data = larva_choose,
   geom_line(aes(y= area_set_0psi))
 
 
-###############################################################
+#############################     model?     ##################################
 install.packages("ggformula")
 library(ggformula)
 
