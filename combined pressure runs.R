@@ -6,11 +6,11 @@ library(readr)
 # setwd("./sacs pH 6 then pressure")
 # setwd("./area results, thresh calc")
 
-#setwd("~/student_documents/UBC/Research/Malawi\\KenyaData\\DinoLite\\pH6_sac_pressurization/area results, thresh calc")
+setwd("~/student_documents/UBC/Research/Malawi\\KenyaData\\DinoLite\\pH8_sac_pressurization/area results, thresh calc")
 
 #setwd("~/student_documents/UBC/Research/Malawi\\data\\sac pressure, fixed pH\\sacs pH 6 then pressure/area results, thresh calc")
  
-setwd("~/student_documents/UBC/Research/Malawi\\americanus comparison\\pH6/area results, thresh calc")
+#setwd("~/student_documents/UBC/Research/Malawi\\americanus comparison\\pH6/area results, thresh calc")
 
 
 # the list of file names will provide the files for r to read in, as well as 
@@ -30,14 +30,15 @@ larvae.df <- read_delim(list_of_results,
   mutate(location = "Kenya") %>%
   mutate(larva = substr(larva, 1, nchar(larva)-4)) %>% #drop file extension
   group_by(larva, sac) %>%
-  mutate(psi = (row_number() * 30) - 30) %>% # x axis starting from zero [[[((( FOR MALAWI DATA )))]]]
-  #mutate(psi = (row_number() * 10) - 10) %>% # x axis starting from zero [[[((( FOR KENYA DATA )))]]]
+  #mutate(psi = (row_number() * 30) - 30) %>% # x axis starting from zero [[[((( FOR MALAWI DATA )))]]]
+  mutate(psi = (row_number() * 10) - 10) %>% # x axis starting from zero [[[((( FOR KENYA DATA )))]]]
   #slice(-1) %>% # FOR AMERICANUS removes 1st obsv of group (still to figure out showing 0 - 01h change)
+  mutate(kpa = (psi * 6.89476)) %>%
   mutate(area_set_0psi = Area - Area[1]) %>% # still abs size, but starting from o psi
   mutate(delta_frac.area = abs((Area - Area[1]) / Area[1])) %>%
   mutate(pct.area = ((Area - Area[1]) / Area[1]) * 100) %>%
   ungroup() %>%
-  group_by(psi) %>%
+  group_by(kpa) %>%
   mutate(mean_pct_area = mean(pct.area)) %>% # mean for all sacs at a psi
   mutate(sd_pct_area = sd(pct.area)) 
 
@@ -52,8 +53,13 @@ ggplot(data = larvae.df,
            colour = larva), na.rm = F) +
   geom_point(aes(y= pct.area), size = 2, alpha = 0.4) +
   geom_line(aes(y= pct.area), alpha = 0.4) +
-  geom_point(aes(y= mean_pct_area), size = 3, colour = "black") +
-  geom_line(aes(y= mean_pct_area), colour = "black")
+  geom_smooth(method = 'lm', 
+              formula = y ~ splines::bs(x, df = 4, knots = 200),
+              inherit.aes = F, 
+              aes(x = psi, y= pct.area), 
+              color = '#555555') 
+  #geom_point(aes(y= mean_pct_area), size = 3, colour = "black") +
+  #geom_line(aes(y= mean_pct_area), colour = "black")
 
 # absolute sizez
 ggplot(data = larvae.df, 
@@ -83,7 +89,7 @@ getwd()
 
 
 write_csv(larvae.df,
-          "../../data frames by pH/larvae_pH6.csv")
+          "../../data frames by pH/larvae_pH7.csv")
 
 
 ###################################################################################
@@ -95,11 +101,12 @@ pH_crush_files <- # list of file names
              full.names = F) #leave out folder path
 print(pH_crush_files)
 
-pH_crushes.BC <- read_delim(pH_crush_files, ###  rename for location   ###
+##  check wd 
+pH_crushes.Kenya <- read_delim(pH_crush_files, ###  rename for location   ###
                          delim = ",",
                          id = NULL)
 
-pH_crushes.BC <- pH_crushes.BC %>%  ###  rename for location   ###
+pH_crushes.Kenya <- pH_crushes.Kenya %>%  ###  rename for location   ###
   ungroup() %>%
   group_by(pH, psi) %>%
   mutate(mean_area_by_pH = mean(Area)) %>%
