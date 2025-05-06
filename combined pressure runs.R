@@ -6,8 +6,8 @@ library(readr)
 # setwd("./sacs pH 6 then pressure")
 # setwd("./area results, thresh calc")
 
-#still needs species separated
-setwd("~/student_documents/UBC/Research/Malawi\\KenyaData\\DinoLite\\pH8_sac_pressurization/area results, thresh calc")
+
+setwd("~/student_documents/UBC/Research/Malawi\\KenyaData\\DinoLite\\pH6_sac_pressurization/area results, thresh calc")
 
 #setwd("~/student_documents/UBC/Research/Malawi\\data\\sac pressure, fixed pH\\sacs pH 8 then pressure/area results, thresh calc")
  
@@ -43,6 +43,10 @@ larvae.df <- read_delim(list_of_results,
   mutate(sd_pct_area = sd(pct.area)) 
 
 print(larvae.df)
+
+((6.89476 * 630)*1000)/(FWD*g)
+((6.89476 * 720)*1000)/(FWD*g)
+((6.89476 * 819)*1000)/(FWD*g)
 
 ######################   making the file for a given pH   #########################
 getwd()
@@ -130,91 +134,18 @@ pH_crushes.Kenya$species <- Kenya_species$species # tac on species column
 pH_crushes.Kenya <- relocate(pH_crushes.Kenya, species, .before = kpa) # move species column to same position as other dfs
   
 
-
+(200*1000)/(FWD*g)
 
 
 #####################################################################################
 ##  combine
 
-pH_crushes <- rbind(pH_crushes.BC, pH_crushes.Kenya, pH_crushes.Malawi)
+pH_crushes <- rbind(pH_crushes.BC, pH_crushes.Kenya, pH_crushes.Malawi) %>%
+  mutate(depth.m = (kpa*1000)/(FWD*g)) %>%
+  ungroup()
 
 head(pH_crushes)
 tail(pH_crushes)
-
-# absolute sizez
-ggplot(data = filter(pH_crushes, pH == "6"),
-         #pH_crushes,
-       aes(x= kpa,
-           group = interaction(pH, larva, sac),
-           #group = as_factor(pH),
-           colour = as_factor(pH)), na.rm = F) +
-  geom_smooth(data = filter(pH_crushes, pH == 6), method = 'lm',
-              formula = y ~ splines::bs(x, df = 3, knots = 120),
-              inherit.aes = F,
-              aes(x = psi,
-                  y = Area,
-                  colour = as_factor(pH),
-                  #colour = "black", # for when displayed separately
-                  group = pH)) +
-  geom_smooth(data = filter(pH_crushes, pH == 7), method = 'lm',
-              formula = y ~ splines::bs(x, df = 3, knots = 300),
-              inherit.aes = F,
-              aes(x = psi,
-                  y = Area,
-                  colour = as_factor(pH),
-                  #colour = "black", # for when displayed separately
-                  group = pH)) +
-  geom_smooth(data = filter(pH_crushes, pH == 8), method = 'lm',
-              formula = y ~ splines::bs(x, df = 3, knots = 20),
-              inherit.aes = F,
-              aes(x = psi,
-                  y = Area,
-                  colour = as_factor(pH),
-                  #colour = "black", # for when displayed separately
-                  group = pH)) +
-  # geom_point(aes(y= Area), alpha = 0.2) +
-  # geom_line(aes(y= Area)) +
-  # ylim(0.1, 0.4) + # scale for Kenya sacs
-  # xlim(0, 750) + # scale for Kenya sacs
-  # ylim(0.05, 0.25) + # scale for Malawi sacs
-  # xlim(0, 850) + # scale for Malawi sacs
-  theme_classic() +
-  theme(legend.position = c(0.8, 0.8)) +
-  #theme(legend.position = "none") +
-  theme(axis.ticks.length = unit(-1, "mm")) 
-
-ggsave("three_splines_abs.pdf", 
-       units = c("cm"), 
-       width = 6, height = 6, 
-       path = "../")
-
- #####################################################################################
-
-
-
-
-###########   looking at/ comparing individual larvae   ##########
-
-larva_choose <- larvae.df %>%
-  filter(larva == "larva 11" | larva == "larva 12")
-print(larva_choose)
-
-# absolute sizez
-ggplot(data = larva_choose, 
-       aes(x= psi,
-           group = interaction(larva, sac),
-           colour = larva), na.rm = F) +
-  geom_point(aes(y= Area), size = 1) +
-  geom_line(aes(y= Area))
-
-
-# difference from 0 psi
-ggplot(data = larva_choose, 
-       aes(x= psi,
-           group = interaction(larva, sac),
-           colour = larva), na.rm = F) +
-  geom_point(aes(y= area_set_0psi)) +
-  geom_line(aes(y= area_set_0psi))
 
 
 #############################     model?     ##################################
